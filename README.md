@@ -1,6 +1,6 @@
 # expenses_app
 
-A new Flutter project.
+Flutter application for expense management. Course "Aprenda Flutter e Desenvolva Apps Para Android e IOS 2021" - https://www.udemy.com/course/curso-flutter/
 
 ## Getting Started
 
