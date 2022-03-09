@@ -13,11 +13,37 @@ class ExpensesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = ThemeData();
+    //SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]); //fixa orientacao do dispositivo
+    Color getSwitchColor(Set<MaterialState> states, bool isTrack) {
+      const Set<MaterialState> interactiveStates = <MaterialState>{
+        MaterialState.selected,
+        MaterialState.pressed,
+        MaterialState.hovered,
+        MaterialState.focused,
+      };
+      if (isTrack) {
+        if (states.any(interactiveStates.contains)) {
+          return Colors.amber.shade200;
+        }
+        return Colors.grey;
+      } else {
+        if (states.any(interactiveStates.contains)) {
+          return Colors.amber;
+        }
+        return Colors.white;
+      }
+    }
 
+    final ThemeData theme = ThemeData();
     return MaterialApp(
       home: MyHomePage(),
       theme: theme.copyWith(
+        switchTheme: SwitchThemeData(
+          trackColor: MaterialStateProperty.resolveWith(
+              (Set<MaterialState> states) => getSwitchColor(states, true)),
+          thumbColor: MaterialStateProperty.resolveWith(
+              (Set<MaterialState> states) => getSwitchColor(states, false)),
+        ),
         colorScheme: theme.colorScheme.copyWith(
           primary: Colors.purple,
           secondary: Colors.amber,
@@ -55,6 +81,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<Transaction> _transactions = [];
+  bool _showChart = false;
 
   List<Transaction> get _recentTransactions {
     return _transactions.where((tr) {
@@ -96,22 +123,62 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Despesas Pessoais"),
-        actions: [
+    bool isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+
+    final appBar = AppBar(
+      title: const Text("Despesas Pessoais"),
+      actions: [
+        if (isLandscape)
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openTransactionFormModal(context),
-          )
-        ],
-      ),
+            icon: Icon(_showChart ? Icons.list : Icons.show_chart),
+            onPressed: () {
+              setState(() {
+                _showChart = !_showChart;
+              });
+            },
+          ),
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () => _openTransactionFormModal(context),
+        ),
+      ],
+    );
+    final availableHeight = MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top;
+
+    return Scaffold(
+      appBar: appBar,
       body: SingleChildScrollView(
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Chart(_recentTransactions),
-              TransactionList(_transactions, _removeTransaction),
+              // if (isLandscape)
+              //   Row(
+              //     mainAxisAlignment: MainAxisAlignment.center,
+              //     children: [
+              //       Text('Exibir Gráfico'),
+              //       Switch(
+              //         value: _showChart,
+              //         onChanged: (value) {
+              //           setState(() {
+              //             _showChart = value;
+              //           });
+              //         },
+              //       ),
+              //     ],
+              //   ),
+              if (_showChart || !isLandscape)
+                Container(
+                  height: availableHeight * (isLandscape ? 0.8 : 0.3),
+                  child: Chart(_recentTransactions),
+                ),
+              if (!_showChart || !isLandscape)
+                Container(
+                  height: availableHeight * (isLandscape ? 1 : 0.7),
+                  child: TransactionList(_transactions, _removeTransaction),
+                ),
             ]),
       ),
       floatingActionButton: FloatingActionButton(
